@@ -1,4 +1,4 @@
-FROM python:3.8.11-alpine3.14
+FROM python:3.9-alpine3.19
 
 WORKDIR /service/app
 ADD ./src/ /service/app/
