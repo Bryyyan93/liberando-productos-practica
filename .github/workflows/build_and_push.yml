@@ -33,7 +33,7 @@ jobs:
 
       - name: Get component name
         run: |
-          echo "COMPONENT_NAME=$(echo ${{ github.event.release.name }} | sed 's/-v${{ env.COMPONENT_VERSION }}//')" >> $GITHUB_ENV
+          echo "COMPONENT_NAME=$(echo ${{ github.event.release.tag_name }} | sed 's/-v${{ env.COMPONENT_VERSION }}//')" >> $GITHUB_ENV
 
       - name: Check component name and component version
         run: |

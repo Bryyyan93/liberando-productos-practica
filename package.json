@@ -4,7 +4,7 @@
     "workspaces": [
     "src",
     "liberando-producto",
-    "."
+    "./"
     ],
     "dependencies": {
       "@qiwi/multi-semantic-release": "^6.5.1"
