@@ -7,10 +7,7 @@
     "."
     ],
     "dependencies": {
-      "@qiwi/multi-semantic-release": "^6.5.1",
-      "@semantic-release/commit-analyzer": "^9.0.0",
-      "@semantic-release/release-notes-generator": "^10.0.0",
-      "@semantic-release/github": "^8.0.0"
+      "@qiwi/multi-semantic-release": "^6.5.1"
     },
     "release": {
       "branches": [
