@@ -1,10 +1,14 @@
 name: Build and Push
 
+#on:
+#  release:
+#    types:
+#      - published
 on:
-  release:
+  workflow_run:
+    workflows: ["Release"]  # Nombre exacto del workflow release.yml
     types:
-      - published
-
+      - completed
 
 permissions:
   contents: write
