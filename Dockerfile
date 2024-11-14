@@ -1,12 +1,24 @@
 FROM python:3.9-alpine3.19
 
 WORKDIR /service/app
-ADD ./src/ /service/app/
-COPY requirements.txt /service/app/
 
-RUN apk --no-cache add curl build-base npm
+COPY requirements.txt .
+
+# Instala las dependencias del sistema necesarias para compilar algunas bibliotecas de Python
+RUN apk --no-cache add \
+    curl \
+    build-base \
+    npm \
+    libffi-dev \
+    openssl-dev \
+    python3-dev \
+    musl-dev \
+    gcc
+    
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
+
+ADD ./src/ /service/app/
 
 EXPOSE 8081
 
