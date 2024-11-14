@@ -20,11 +20,19 @@ jobs:
       - name: Install nodejs
         uses: actions/setup-node@v3
         with:
-          node-version: "19"
+          node-version: "20.8.1"
 
       - name: Install multi-semantic-release
         run: |
           npm install
+
+      - name: Fix vulnerabilities
+        run: |
+          npm audit fix
+      
+      - name: List files
+        run: |
+          ls -R
 
       - name: Run semantic release
         run: |
