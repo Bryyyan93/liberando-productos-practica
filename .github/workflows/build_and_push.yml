@@ -96,7 +96,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/${{ env.COMPONENT_NAME }}:${{ env.COMPONENT_VERSION }}
             ghcr.io/${{ github.repository_owner }}/${{ env.COMPONENT_NAME }}:latest
           labels: ${{ steps.meta.outputs.labels }}
-          build-args:
+          build-args: |
             VERSION: ${{ env.COMPONENT_VERSION }}
 
       - name: Build and push to Docker Hub
@@ -110,6 +110,6 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.COMPONENT_NAME }}:${{ env.COMPONENT_VERSION }}
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.COMPONENT_NAME }}:latest
           labels: ${{ steps.meta.outputs.labels }}
-          build-args:
+          build-args: |
             VERSION: ${{ env.COMPONENT_VERSION }}
 
