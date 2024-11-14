@@ -26,13 +26,8 @@ jobs:
         run: |
           npm install
 
-      
-      - name: List files
-        run: |
-          ls -R
-
       - name: Run semantic release
         run: |
           npx multi-semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
