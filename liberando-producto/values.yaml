@@ -1,27 +1,14 @@
-# Default values for fast-api-webapp.
+# Default values for fast-api.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
 
 image:
-  repository: xoanmallon/liberando-productos
+  repository: bryyyan/liberando-productos-practica
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "1.1.0"
-
-# imagePullSecrets created to use Docker Hub Private Account
-imagePullSecrets:
-  - name: dockerhub-access
-
-# -- imageCredentials for DockerHub private account
-imageCredentials:
-  ## -- DockerHub registry URL
-  registry: "https://index.docker.io/v2/"
-  ## -- DockerHub account's username
-  username: ""
-  ## -- DockerHub account's token (only read permissions)
-  password: ""
+  tag: "latest"
 
 serviceAccount:
   # Specifies whether a service account should be created
