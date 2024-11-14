@@ -85,14 +85,31 @@ jobs:
             type=semver,pattern={{raw}},value=${{ env.COMPONENT_VERSION }}
             type=raw,value=latest
 
-      - name: Build and push to GHCR and Docker Hub
+      - name: Build and push to GHCR
         uses: docker/build-push-action@v5
         with:
           push: true
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           file: ./Dockerfile # Apunta al Dockerfile en la raíz
           context: . # Usa la raíz como contexto
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ env.COMPONENT_NAME }}:${{ env.COMPONENT_VERSION }}
+            ghcr.io/${{ github.repository_owner }}/${{ env.COMPONENT_NAME }}:latest
           labels: ${{ steps.meta.outputs.labels }}
           build-args:
-            VERSION=${{ env.COMPONENT_VERSION }}
+            VERSION: ${{ env.COMPONENT_VERSION }}
+
+      - name: Build and push to Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          file: ./Dockerfile # Apunta al Dockerfile en la raíz
+          context: . # Usa la raíz como contexto
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.COMPONENT_NAME }}:${{ env.COMPONENT_VERSION }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.COMPONENT_NAME }}:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args:
+            VERSION: ${{ env.COMPONENT_VERSION }}
+
