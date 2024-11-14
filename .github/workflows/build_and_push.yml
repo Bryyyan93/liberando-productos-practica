@@ -93,8 +93,8 @@ jobs:
           file: ./Dockerfile # Apunta al Dockerfile en la raíz
           context: . # Usa la raíz como contexto
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.COMPONENT_NAME }}:${{ env.COMPONENT_VERSION }}
-            ghcr.io/${{ github.repository_owner }}/${{ env.COMPONENT_NAME }}:latest
+            ghcr.io/${{ github.repository_owner | toLower }}/liberando-productos-practica:${{ env.COMPONENT_VERSION | toLower }}
+            ghcr.io/${{ github.repository_owner | toLower }}/liberando-productos-practica:latest
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VERSION: ${{ env.COMPONENT_VERSION }}
