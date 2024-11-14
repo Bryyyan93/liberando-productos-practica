@@ -79,8 +79,8 @@ jobs:
           file: ./Dockerfile
           context: .
           tags: |
-            ghcr.io/${{ github.repository_owner | toLower }}/liberando-productos-practica:${{ env.COMPONENT_VERSION }}
-            ghcr.io/${{ github.repository_owner | toLower }}/liberando-productos-practica:latest
+            ghcr.io/${{ secrets.GHCR_OWNER }}/liberando-productos-practica:${{ env.COMPONENT_VERSION }}
+            ghcr.io/${{ secrets.GHCR_OWNER }}/liberando-productos-practica:latest
           labels: ${{ steps.meta.outputs.labels }}
           build-args:
             VERSION=${{ env.COMPONENT_VERSION }}
@@ -93,8 +93,8 @@ jobs:
           file: ./Dockerfile
           context: .
           tags: |
-            ${{ secrets.DOCKER_USERNAME | toLower }}/liberando-productos-practica:${{ env.COMPONENT_VERSION }}
-            ${{ secrets.DOCKER_USERNAME | toLower }}/liberando-productos-practica:latest
+            ${{ secrets.DOCKER_USERNAME }}/liberando-productos-practica:${{ env.COMPONENT_VERSION }}
+            ${{ secrets.DOCKER_USERNAME }}/liberando-productos-practica:latest
           labels: ${{ steps.meta.outputs.labels }}
           build-args:
             VERSION=${{ env.COMPONENT_VERSION }}
