@@ -17,7 +17,7 @@ RUN apk --no-cache add \
     cargo
 
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --prefer-binary -r requirements.txt
 
 ADD ./src/ /service/app/
 
