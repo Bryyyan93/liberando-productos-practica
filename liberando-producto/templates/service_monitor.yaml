@@ -1,0 +1,14 @@
+{{- if and .Values.metrics.enabled -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "liberando-producto.fullname" . }}
+  labels:
+    {{- include "liberando-producto.labels" . | nindent 4 }}
+spec:
+  endpoints:
+  - port: {{ .Values.metrics.svc.name }}
+  selector:
+    matchLabels:
+      {{- include "liberando-producto.selectorLabels" . | nindent 6 }}
+{{- end }}
