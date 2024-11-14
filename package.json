@@ -1,10 +1,6 @@
 {
     "name": "test-repo-multi-semantic-release",
     "private": true,
-    "workspaces": [
-      "package1/",
-      "package2/"
-    ],
     "dependencies": {
       "@qiwi/multi-semantic-release": "^6.5.1"
     },
