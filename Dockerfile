@@ -1,20 +1,17 @@
-FROM python:3.9-alpine3.19
+FROM python:3.9-slim
 
 WORKDIR /service/app
 
 COPY requirements.txt .
 
 # Instala las dependencias del sistema necesarias para compilar algunas bibliotecas de Python
-RUN apk --no-cache add \
+RUN apt-get update && apt-get install -y \
     curl \
-    build-base \
-    npm \
-    libffi-dev \
-    openssl-dev \
+    build-essential \  
+    libffi-dev \       
+    libssl-dev \
     python3-dev \
-    musl-dev \
-    gcc \
-    cargo
+    cargo  
 
 RUN pip install --upgrade pip
 RUN --mount=type=cache,target=/root/.cache/pip \
