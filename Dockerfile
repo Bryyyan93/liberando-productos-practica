@@ -13,8 +13,9 @@ RUN apk --no-cache add \
     openssl-dev \
     python3-dev \
     musl-dev \
-    gcc
-    
+    gcc \
+    cargo
+
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
