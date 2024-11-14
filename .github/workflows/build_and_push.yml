@@ -29,11 +29,11 @@ jobs:
 
       - name: Get component version
         run: |
-          echo "COMPONENT_VERSION=v$(echo ${{ github.event.release.name }} | awk -F '-v' '{print $NF}')" >> $GITHUB_ENV
+          echo "COMPONENT_VERSION=$(echo ${{ github.event.release.tag_name }} | awk -F '-v' '{print $NF}')" >> $GITHUB_ENV
 
       - name: Get component name
         run: |
-          echo "COMPONENT_NAME=$(echo ${{ github.event.release.name }} | sed 's/-${{ env.COMPONENT_VERSION }}//')" >> $GITHUB_ENV
+          echo "COMPONENT_NAME=$(echo ${{ github.event.release.name }} | sed 's/-v${{ env.COMPONENT_VERSION }}//')" >> $GITHUB_ENV
 
       - name: Check component name and component version
         run: |
