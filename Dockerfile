@@ -17,7 +17,8 @@ RUN apk --no-cache add \
     cargo
 
 RUN pip install --upgrade pip
-RUN pip install --prefer-binary -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --prefer-binary -r requirements.txt
 
 ADD ./src/ /service/app/
 
