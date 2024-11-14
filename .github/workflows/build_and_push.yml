@@ -27,15 +27,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get component version
+      - name: Get the latest release tag
+        id: get_latest_tag
         run: |
-          echo "COMPONENT_VERSION=$(echo ${{ github.event.release.tag_name }} | awk -F '-v' '{print $NF}')" >> $GITHUB_ENV
+          TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "COMPONENT_VERSION=${TAG}" >> $GITHUB_ENV
+          echo "COMPONENT_NAME=liberando-productos-practica" >> $GITHUB_ENV  
 
-      - name: Get component name
-        run: |
-          echo "COMPONENT_NAME=$(echo ${{ github.event.release.tag_name }} | sed 's/-v${{ env.COMPONENT_VERSION }}//')" >> $GITHUB_ENV
+      - name: Fetch all tags
+        run: git fetch --tags
 
-      - name: Check component name and component version
+      - name: Check component version and name
         run: |
           echo "COMPONENT_NAME: ${{ env.COMPONENT_NAME }}"
           echo "COMPONENT_VERSION: ${{ env.COMPONENT_VERSION }}"
