@@ -79,8 +79,8 @@ jobs:
           file: ./Dockerfile
           context: .
           tags: |
-            ghcr.io/${{ secrets.GHCR_OWNER }}/liberando-productos-practica:${{ env.COMPONENT_VERSION }}
-            ghcr.io/${{ secrets.GHCR_OWNER }}/liberando-productos-practica:latest
+            ghcr.io/${{ secrets.GHCR_USERNAME}}/liberando-productos-practica:${{ env.COMPONENT_VERSION }}
+            ghcr.io/${{ secrets.GHCR_USERNAME }}/liberando-productos-practica:latest
           labels: ${{ steps.meta.outputs.labels }}
           build-args:
             VERSION=${{ env.COMPONENT_VERSION }}
