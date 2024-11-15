@@ -82,7 +82,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(last_over_time(main_requests_total[$__rate_interval])) by (pod)",
+          "expr": "sum(last_over_time(server_requests_total[$__rate_interval])) by (pod)",
           "format": "time_series",
           "interval": "",
           "legendFormat": "{{pod}} total requests",
@@ -151,15 +151,15 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(last_over_time(students_create_total[$__rate_interval])) by (pod)",
+          "expr": "sum(last_over_time(bye_request_total[$__rate_interval])) by (pod)",
           "format": "time_series",
           "interval": "",
-          "legendFormat": "{{pod}} calls create students",
+          "legendFormat": "{{pod}} calls to /bye",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Number of calls to create student",
+      "title": "Number of calls to /bye",
       "type": "stat"
     },
     {
