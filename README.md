@@ -242,3 +242,77 @@ Se deberá entregar mediante un repositorio realizado a partir del original lo s
 - Ficheros para CI/CD configurados y ejemplos de ejecución válidos
 - Ficheros para despliegue y configuración de prometheus de todo lo relacionado con este, así como el dashboard creado exportado a `JSON` para poder reproducirlo
 - `README.md` donde se explique como se ha abordado cada uno de los puntos requeridos en el apartado anterior, con ejemplos prácticos y guía para poder reproducir cada uno de ellos
+
+### Despliegue de la aplicación web, Prometheus y Grafana
+Para desplegar los ficheros en Prometheus se debe seguir los siguientes pasos:
+- Crear un cluster de Kubernetes:  
+
+    ```sh
+    minikube start --kubernetes-version='v1.28.3' \
+        --cpus=4 \
+        --memory=4096 \
+        --addons="metrics-server,default-storageclass,storage-provisioner" \
+        -p practica
+    ```  
+
+- Añadir el repositorio de helm `prometheus-community` para poder desplegar el chart `kube-prometheus-stack`:
+
+    ```sh
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo update
+    ```  
+ - Desplegar el chart `kube-prometheus-stack` del repositorio de helm añadido en el paso anterior con los valores configurados en el archivo `kube-prometheus-stack/values.yaml` en el namespace `monitoring`:
+
+    ```sh
+    helm -n monitoring upgrade \
+        --install prometheus \
+        prometheus-community/kube-prometheus-stack \
+        -f kube-prometheus-stack/values.yaml \
+        --create-namespace \
+        --wait --version 55.4.0
+    ```
+ - Desplegar el helm chart:
+
+    ```sh
+    helm -n practica upgrade my-app --wait --install --create-namespace liberando-producto
+    ```  
+
+- Para confirmar que se ha desplegado correctamente, se lanzará los siguientes comandos:
+
+  * observar como se crean los pods en el namespace `practica` donde se ha desplegado el web server:
+
+        ```sh
+        kubectl -n practica get po -w
+        ```
+  * Verificar en los logs del deployment que no ha habido ningún error.
+        ```sh
+        kubectl -n practica logs -f deployment/my-app -c liberandi-producto
+        ```
+
+        Debería obtenerse un resultado similar al siguiente:
+
+        ```sh
+        [2022-11-09 11:28:12 +0000] [1] [INFO] Running on http://0.0.0.0:8081 (CTRL + C to quit)
+        ```  
+- Para poder acceder por el navegador web se deberá hacer un `port-forwarding` de los servicios, para ellos se deberá ejecutar los siguientes comandos:
+
+  * Servicio de Grafana al puerto 3000 de la máquina:
+
+    ```sh
+    kubectl -n monitoring port-forward svc/prometheus-grafana 3000:http-web
+    ```  
+
+  * Servicio de Prometheus al puerto 9090 de la máquina:
+
+    ```sh
+    kubectl -n monitoring port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090
+    ```  
+
+  * Para nuestro servidor:
+
+    ```sh
+    kubectl -n practica port-forward svc/my-app-liberando-producto 8081:8081
+    ```  
+
+
+
