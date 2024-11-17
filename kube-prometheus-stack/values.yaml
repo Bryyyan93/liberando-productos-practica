@@ -106,7 +106,7 @@ alertmanager:
     - name: 'null'
     - name: 'slack'
       slack_configs:
-      - api_url: 'https://hooks.slack.com/services/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' # <--- AÑADIR EN ESTA LÍNEA EL WEBHOOK CREADO
+      - api_url: 'https://hooks.slack.com/services/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' # <--- AÑADIR EN ESTA LÍNEA EL WEBHOOK CREADO
         send_resolved: true
         channel: '#bryan-fiallos-prometheus-alarms' # <--- AÑADIR EN ESTA LÍNEA EL CANAL
         title: '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] Monitoring Event Notification'
@@ -130,15 +130,27 @@ additionalPrometheusRulesMap:
       - name: ruleset_1
         rules:
           - alert: fastApiConsumingMoreThanRequest
-            expr: avg(container_memory_usage_bytes{pod=~"my-app-fast-api-webapp-.*"}) by (pod) > avg(kube_pod_container_resource_requests{resource="memory",container="fast-api-webapp"}) by (pod)
+            expr: avg(container_memory_usage_bytes{pod=~"my-app-liberando-producto-.*"}) by (pod) > avg(kube_pod_container_resource_requests{resource="memory",container="liberando-producto"}) by (pod)
             for: 0m
             labels:
               severity: critical
-              alertname: "fast-api-webapp container is consuming more than requested"
+              alertname: "liberando-producto container is consuming more than requested"
             annotations:
               summary: Pod {{ $labels.pod }} consuming more than requested
               description: "Pod more less than request"
               message: Pod {{ $labels.pod }} is consuming more than requested
+      - name: ruleset_2
+        rules:
+          - alert: FastApiCpuConsumptionExceedsRequests
+            expr: avg(rate(container_cpu_usage_seconds_total{pod=~"my-app-liberando-producto-.*"}[5m])) by (pod) > avg(kube_pod_container_resource_requests{resource="cpu"}) by (pod)
+            for: 1m
+            labels:
+              severity: warning
+              alertname: "CPU usage exceeds requested CPU"
+            annotations:
+              summary: Pod {{ $labels.pod }} is using more CPU than requested
+              description: "The pod {{ $labels.pod }} is consuming {{ $value }} CPU cores, which exceeds the requested CPU."
+              message: "Check the pod {{ $labels.pod }} for unexpected CPU consumption."
 
 grafana:
   plugins:
