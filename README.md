@@ -360,7 +360,7 @@ Para desintalar los recursos una vez usados se deberá ejecutar los siguientes c
   ```sh
   minikube delete -p practica      
   ```  
-  
+
 ### Pruebas de la aplicación web
 Para verificar el correcto funcionameinto de las diferentes partes, se deberá seguir los siguientes pasos:
 
@@ -418,11 +418,17 @@ Para realizar las pruebas de estres y verificar que lleguen los mensajes a `Slac
     kubectl -n practica get hpa -w
     ```
 
+    ![Estado HPA](./img/proceso_hpa.png)
+
   - Abrir una nueva pestaña en la terminal y ver como mientras en el HPA los targets estén por encima de los configurados como máximos se crean nuevos pods para la aplicación:
 
     ```sh
     kubectl -n practica get po -w
     ```  
+    ![Estado_pods](./img/estado_pods.png)
+
+  - Verificamos la monitorización de eventos en Grafana.
+    ![Monitorizacion grafana](./img/eventos_grafana.png)
 
 
 
