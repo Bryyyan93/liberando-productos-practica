@@ -254,7 +254,7 @@ Para desplegar los ficheros en Prometheus se debe seguir los siguientes pasos:
         --addons="metrics-server,default-storageclass,storage-provisioner" \
         -p practica
     ```  
-
+    ![Creacion de cluster](./img/despliegue_minikube.png)
 - Añadir el repositorio de helm `prometheus-community` para poder desplegar el chart `kube-prometheus-stack`:
 
     ```sh
@@ -271,6 +271,13 @@ Para desplegar los ficheros en Prometheus se debe seguir los siguientes pasos:
         --create-namespace \
         --wait --version 55.4.0
     ```
+    Para comprobar que se esta desplegando se deberá ejecutar el siguiente comando:
+
+    ```sh
+    kubectl --namespace monitoring get pods -l "release=prometheus"
+    ```  
+    ![Despliegue Prometheus](./img/despliegue_prometheus.png)
+
  - Desplegar el helm chart:
 
     ```sh
@@ -279,40 +286,77 @@ Para desplegar los ficheros en Prometheus se debe seguir los siguientes pasos:
 
 - Para confirmar que se ha desplegado correctamente, se lanzará los siguientes comandos:
 
-  * observar como se crean los pods en el namespace `practica` donde se ha desplegado el web server:
+  - observar como se crean los pods en el namespace `practica` donde se ha desplegado el web server: 
+    
+    ```sh
+    kubectl -n practica get po -w
+    ```
+    ![Creacion de pods](./img/pods_webserver.png)  
 
-        ```sh
-        kubectl -n practica get po -w
-        ```
-  * Verificar en los logs del deployment que no ha habido ningún error.
-        ```sh
-        kubectl -n practica logs -f deployment/my-app -c liberandi-producto
-        ```
+  - Verificar en los logs del deployment que no ha habido ningún error: 
 
-        Debería obtenerse un resultado similar al siguiente:
+    ```sh
+    kubectl -n practica logs -f deployment/my-app-liberando-producto
+    ```
 
-        ```sh
-        [2022-11-09 11:28:12 +0000] [1] [INFO] Running on http://0.0.0.0:8081 (CTRL + C to quit)
-        ```  
+    Debería obtenerse un resultado similar al siguiente:
+
+    ![Resultado de los logs](./img/respuesta_logs.png)
+
 - Para poder acceder por el navegador web se deberá hacer un `port-forwarding` de los servicios, para ellos se deberá ejecutar los siguientes comandos:
 
-  * Servicio de Grafana al puerto 3000 de la máquina:
+  - Servicio de Grafana al puerto 3000 de la máquina:  
 
     ```sh
     kubectl -n monitoring port-forward svc/prometheus-grafana 3000:http-web
     ```  
+    - Las credenciales por defecto son `admin` para el usuario y `prom-operator` para la contraseña.  
 
-  * Servicio de Prometheus al puerto 9090 de la máquina:
+      ![Login de Grafana](./img/principal_grafana.png)  
+
+    - Acceder al dashboard creado para observar las peticiones al servidor a través de la URL `http://localhost:3000/   dashboards`, seleccionando una vez en ella la opción Import y en el siguiente paso seleccionar **Upload JSON File** y seleccionar el archivo presente en esta carpeta llamado `custom_dashboard.json`.
+
+    ![Dashboard de Grafana](./img/dashboard_grafana.png)
+
+  - Servicio de Prometheus al puerto 9090 de la máquina:
 
     ```sh
     kubectl -n monitoring port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090
     ```  
 
-  * Para nuestro servidor:
+    - Para acceder a la aplicación web principal debemos hacerlo a través de la URL `http://localhost:9090`.  
+    
+    ![Dashboard de Prometheus](./img/dashboard_prometheus.png)
+
+  - Para acceder al servicio web:
 
     ```sh
     kubectl -n practica port-forward svc/my-app-liberando-producto 8081:8081
     ```  
+
+    - Para acceder a la aplicación web principal debemos hacerlo a través de la URL `http://localhost:8081` 
+
+      ![Dashboard de la pagina principal](./img/Dashboard_web.png)
+
+    - Para realizar diferentes peticiones al servidor de Web, es posible ver los endpoints disponibles y realizar peticiones a los mismos a través de la URL `http://localhost:8081/docs` utilizando swagger.  
+
+      ![Dashboard de Swagger](./img/dashboard_swagger.png) 
+
+### Pruebas de la aplicación web
+Para verificar el correcto funcionameinto de las diferentes partes, se deberá seguir los siguientes pasos:
+
+- Verificar que que el contador de las peticiones esta fucnionado y enviandolas correctamente a `Grafana`.
+  - Con `Swagger` se lanza las peticiones `bye`: 
+
+    Enviar petición API: 
+
+    ![Peticion swagger de Bye](./img/swagger_bye.png) 
+
+    Respuesta de la petición API: 
+    ![Respuesta petición API](./img/resp_swagger_bye.png)
+
+    Verificar el contador en `Grafana`:
+    ![Visualización en Grafana](./img/cont_grafana_bye.png)
 
 
 
