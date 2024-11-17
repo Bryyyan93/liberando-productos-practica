@@ -1,5 +1,26 @@
 # keepcoding-devops-liberando-productos-practica-final
 
+## Contenido
+
+- [Objetivo](#objetivo)
+- [Proyecto inicial](#proyecto-inicial)
+- [Software necesario](#software-necesario)
+- [Ejecución de servidor](#ejecucion-de-servidor)
+  - [Ejecución directa con Python](#ejecucion-directa-con-python)
+  - [Ejecución a través de un contenedor Docker](#ejecución-a-traves-de-un-contenedor-docker)
+- [Comprobación de endpoints de servidor y métricas](#comprobacion-de-endpoints-de-servidor-y-metricas)
+- [Tests](#tests)
+- [Practica a realizar](#practica-a-realizar)
+- [Entregables](#entregables)
+  - [Estructura del proyecto](#estructura-del-proyecto)
+  - [Ficheros CI/CD](#ficheros-cicd)
+  - [Charts de Helm](#charts-de-helm)
+  - [Configuracion de alertas](#configuración-de-alertas)
+  - [Despliegue de la aplicacion web Prometheus y Grafana](#despliegue-de-la-aplicación-web-prometheus-y-grafana)
+  - [Pruebas de la aplicacion web](#pruebas-de-la-aplicación-web)
+  - [Pruebas de estres](#pruebas-de-estrés)
+  - [Mejoras futuras](#mejoras-futuras)
+
 ## Objetivo
 
 El objetivo es mejorar un proyecto creado previamente para ponerlo en producción, a través de la adicción de una serie de mejoras.
@@ -241,7 +262,262 @@ Se deberá entregar mediante un repositorio realizado a partir del original lo s
 - Código de la aplicación y los tests modificados
 - Ficheros para CI/CD configurados y ejemplos de ejecución válidos
 - Ficheros para despliegue y configuración de prometheus de todo lo relacionado con este, así como el dashboard creado exportado a `JSON` para poder reproducirlo
-- `README.md` donde se explique como se ha abordado cada uno de los puntos requeridos en el apartado anterior, con ejemplos prácticos y guía para poder reproducir cada uno de ellos
+- `README.md` donde se explique como se ha abordado cada uno de los puntos requeridos en el apartado anterior, con ejemplos prácticos y guía para poder reproducir cada uno de ellos.  
+
+### Estructura del proyecto.
+
+La estructura basica de la practica es la siguiente:
+
+```
+/
+├── .github/                     
+│   ├── workflows/               
+├── img/                         
+├── kube-prometheus-stack/       
+├── liberando-producto/          
+├── src/                         
+├── custom_dashboard.json        
+├── Dockerfile                   
+├── Makefile                     
+├── package.json                 
+├── README.md                    
+├── requirements.txt             
+
+```
+
+### Ficheros CI/CD
+Para el apartado CI/CD se ha usado `Github Accions`, se ha sepado en tres workflows para difereciar las distintas etapas.
+
+```
+.github/
+  └── workflows/
+      ├── build_and_push.yml  
+      ├── release.yml         
+      └── test.yml            
+```  
+De vería de esta manera en `Github`:
+
+![Workflows](./img/github_workflows.png)  
+
+A continuación se enumera las principales acciones de cada `Workflow`.  
+
+- Test.yml
+  - **Checkout del código**: Descarga el código del repositorio.
+  - **Configurar Python**: Instala Python 3.11.8 y habilita la caché de dependencias pip.
+  - **Actualizar pip**: Actualiza pip a la última versión.
+  - **Instalar dependencias**: Instala las dependencias definidas en requirements.txt.
+  - **Ejecutar pruebas**: Corre los tests con pytest, generando un informe de cobertura (--cov). 
+    ```
+      - name: Run unit-tests
+        run: pytest --cov=src --cov-report=term-missing src/tests
+    ```
+    Obteniendo el siguiente resultado:
+    ![Informe cobertura](./img/informe_cobertura.png)
+
+- Release.yml
+  - **Checkout del código**: Descarga el código del repositorio.
+  - **Instalar Node.js**: Configura Node.js en su versión 20.8.1.
+  - **Instalar dependencias**: Ejecuta npm install para instalar las dependencias necesarias.
+  - **Ejecutar Semantic Release**: Llama a multi-semantic-release para analizar commits, generar versiones y publicar   releases en GitHub.
+    ```
+      - name: Run semantic release
+        run: |
+          npx multi-semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+    ```
+
+    ![Comprobación de release](./img/Comprobar_release.png)
+
+- Build_and_push.yml
+  - **Activar el workflow tras un release**: Se ejecuta automáticamente después del workflow release.yml.
+  - **Checkout del código**: Descarga el código del repositorio.
+  - **Configurar caché de pip**: Habilita la caché para las dependencias de Python.
+    ```
+      # Cache de dependencias de 
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-p
+          restore-keys: |
+            ${{ runner.os }}-pip-
+    ```
+    ![Habilitar caché](./img/cache_github.png)
+
+  - **Obtener el tag de versión más reciente**: Extrae la versión del release usando las etiquetas de Git.
+  - **Configurar QEMU y Buildx**: Permite construir imágenes multiplataforma.
+  - **Iniciar sesión en GHCR**: Autentica en GitHub Container Registry.
+    ```
+      # Login to GitHub Container Regi
+      - name: Docker Login to GHCR
+        uses: docker/login-action@v1
+        id: configure-login-ghcr
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.PAT }}
+    ```        
+  - **Iniciar sesión en Docker Hub**: Autentica en Docker Hub.
+    ```
+          # Login to Docker Hub
+      - name: Docker Login to Docker Hub
+        uses: docker/login-action@v1
+        id: configure-login-dockerhub
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+    ```  
+
+  - Construir y subir imágenes:
+    - **A GHCR**: Construye y sube imágenes etiquetadas con la versión y latest.
+    - **A Docker Hub**: Construye y sube imágenes etiquetadas con la versión y latest. 
+      ```
+            - name: Build and push to GHCR
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          file: ./Dockerfile
+          context: .
+          tags: |
+            ghcr.io/${{ secrets.GHCR_USERNAME}}/liberando-productos-practica:${{ env.COMPONENT_VERSION }}
+            ghcr.io/${{ secrets.GHCR_USERNAME }}/liberando-productos-practica:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args:
+            VERSION=${{ env.COMPONENT_VERSION }}
+
+      - name: Build and push to Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          file: ./Dockerfile
+          context: .
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/liberando-productos-practica:${{ env.COMPONENT_VERSION }}
+            ${{ secrets.DOCKER_USERNAME }}/liberando-productos-practica:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args:
+            VERSION=${{ env.COMPONENT_VERSION }}
+      ``` 
+**NOTA**:Se ha actualizado la imagen base en el fichero `DockerFile` puesto que la versión era demasiado antigua y se necesita instalar demasiadas librerias para que realizar la compilación, haciendo que este proceso tarde demasiado tiempo. Se ha hecho los siguientes cambios:
+
+```
+FROM python:3.9-slim
+
+WORKDIR /service/app
+
+COPY requirements.txt .
+
+# Instala las dependencias del sistema necesarias para compilar algunas bibliotecas de Python
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \  
+    libffi-dev \       
+    libssl-dev \
+    python3-dev \
+    cargo  
+
+RUN pip install --upgrade pip
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --prefer-binary -r requirements.txt
+
+ADD ./src/ /service/app/
+
+EXPOSE 8081
+
+# Error obsoleto
+# ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
+
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=5 \
+    CMD curl -s --fail http://localhost:8081/health || exit 1
+
+CMD ["python3", "-u", "app.py"]
+```
+
+### Charts de Helm
+Para el despliegue en `Kubernetes` se realizan charts de Helm, con la siguiente estructura:
+
+```
+liberando-producto/
+  ├── templates/
+  │   ├── tests/               
+  │   ├── deployment.yaml      
+  │   ├── hpa.yaml             
+  │   ├── ingress.yaml         
+  │   ├── service_monitor.yaml 
+  │   ├── service.yaml         
+  │   ├── serviceaccount.yaml  
+  │
+  ├── Chart.yaml               
+  ├── package.json             
+  ├── values.yaml              
+``` 
+Ha sido un despliegue sencillo sin grandes cambios. En el apartado de despliegue se mostrará la forma de desplegar.
+
+### Configuración de alertas
+
+Para la configuración de alertas se ha modificado el fichero `values.yaml` en el fichero `kube-prometheus-stack`.
+
+Se ha añadido la monotorización de la `CPU` además de la modiciación para que se ajuste al pod usado en el desarrollo de la práctica:
+
+```sh
+additionalPrometheusRulesMap:
+  rule-name:
+    groups:
+      - name: ruleset_1
+        rules:
+          - alert: fastApiConsumingMoreThanRequest
+            expr: avg(container_memory_usage_bytes{pod=~"my-app-liberando-producto-.*"}) by (pod) > avg(kube_pod_container_resource_requests{resource="memory",container="liberando-producto"}) by (pod)
+            for: 0m
+            labels:
+              severity: critical
+              alertname: "liberando-producto container is consuming more than requested"
+            annotations:
+              summary: Pod {{ $labels.pod }} consuming more than requested
+              description: "Pod more less than request"
+              message: Pod {{ $labels.pod }} is consuming more than requested
+      - name: ruleset_2
+        rules:
+          - alert: FastApiCpuConsumptionExceedsRequests
+            expr: avg(rate(container_cpu_usage_seconds_total{pod=~"my-app-liberando-producto-.*"}[5m])) by (pod) > avg(kube_pod_container_resource_requests{resource="cpu"}) by (pod)
+            for: 1m
+            labels:
+              severity: warning
+              alertname: "CPU usage exceeds requested CPU"
+            annotations:
+              summary: Pod {{ $labels.pod }} is using more CPU than requested
+              description: "The pod {{ $labels.pod }} is consuming {{ $value }} CPU cores, which exceeds the requested CPU."
+              message: "Check the pod {{ $labels.pod }} for unexpected CPU consumption."
+```
+
+Tambien se ha modificado el `dashboard` de `Grafana` para añadir el nuevo endpoint requerido. Para ello se modifica `custom_dashboard.json`.  
+
+```sh
+      "pluginVersion": "10.2.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "sum(last_over_time(bye_request_total[$__rate_interval])) by (pod)",
+          "format": "time_series",
+          "interval": "",
+          "legendFormat": "{{pod}} calls to /bye",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Number of calls to /bye",
+      "type": "stat"
+```  
+**NOTA**: Es un fragmento del código, falta parte de la configuración, revisar `custom_dashboard.json`.  
 
 ### Despliegue de la aplicación web, Prometheus y Grafana
 Para desplegar los ficheros en Prometheus se debe seguir los siguientes pasos:
@@ -388,7 +664,7 @@ Para realizar las pruebas de estres y verificar que lleguen los mensajes a `Slac
 
 - Utilizar el resultado obtenido en el paso anterior para seleccionar en el dashboard creado de `grafana` para seleccionar el pod del que obtener información, seleccionando este a través del menú desplegable de nombre pod.  
 
-- Acceder mediante una shell interactiva al contenedor fast-api-webapp del pod obtenido en el paso anterior:
+- Acceder mediante una shell interactiva al contenedor del pod obtenido en el paso anterior:
 
   ```sh
   kubectl -n practica exec --stdin --tty my-app-liberando-producto-5dfdd9bcf-ngj8h -c liberando-producto -- /bin/sh
@@ -430,6 +706,25 @@ Para realizar las pruebas de estres y verificar que lleguen los mensajes a `Slac
   - Verificamos la monitorización de eventos en Grafana.
     ![Monitorizacion grafana](./img/eventos_grafana.png)
 
+- Al finalizar las pruebas de estrés, se puede observar como vuelve al pod inicial matando los pods creados.
+  ![Cambio en el estrés](./img/stress_pods.png)
 
+  Eliminación de pods
+  ![Eliminación de pods](./img/eliminar_pods.png)
+
+### Mejoras futuras
+Las posibles mejoras para intentar mejorar el proyecto son:
+
+- Actualizar las versiones de las distintas librerias ya que muchas están `deprecated` y algunas son incompatibles.
+  ![Librerias deprecated](./img/warning_deprecated_build.png)
+  ![Librerias deprecated](./img/warning_release.png)  
+
+- En `Slack` al momento de enviar los eventos me devuelve un correo con la siguiente información:
+  ![Error Slack](./img/slack_mail.png)  
+  
+  Es decir, invalida la URL configurada y esto hace que me de un error al autentificar y no pueda generar los eventos en `Slack`. Como se ha visto, los evento si que se generan en `Grafana` y `Prometheus`.
+
+- Añadir endpoints extra.
+ 
 
 
