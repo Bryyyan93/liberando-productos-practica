@@ -402,6 +402,8 @@ A continuación se enumera las principales acciones de cada `Workflow`.
           build-args:
             VERSION=${{ env.COMPONENT_VERSION }}
       ``` 
+      ![imagen en DockerHub](./img/docker_hub.png)
+      ![imagenes en github](./img/github.png)
 **NOTA**:Se ha actualizado la imagen base en el fichero `DockerFile` puesto que la versión era demasiado antigua y se necesita instalar demasiadas librerias para que realizar la compilación, haciendo que este proceso tarde demasiado tiempo. Se ha hecho los siguientes cambios:
 
 ```
