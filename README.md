@@ -342,6 +342,25 @@ Para desplegar los ficheros en Prometheus se debe seguir los siguientes pasos:
 
       ![Dashboard de Swagger](./img/dashboard_swagger.png) 
 
+#### Desinstalar recursos
+Para desintalar los recursos una vez usados se deberá ejecutar los siguientes comandos:
+- Eliminar el chart `my-app` en el namespace `practica`:
+
+  ```sh
+  helm -n practica uninstall my-app
+  ```  
+
+- Eliminar el chart `kube-prometheus-stack` en el namespace `monitoring`:
+
+  ```sh
+  helm -n monitoring uninstall prometheus
+  ```
+- Eliminar el perfil `practica` de Minikube para detener y borrar los recursos de Kubernetes y el entorno en Minikube:
+
+  ```sh
+  minikube delete -p practica      
+  ```  
+  
 ### Pruebas de la aplicación web
 Para verificar el correcto funcionameinto de las diferentes partes, se deberá seguir los siguientes pasos:
 
@@ -357,6 +376,54 @@ Para verificar el correcto funcionameinto de las diferentes partes, se deberá s
 
     Verificar el contador en `Grafana`:
     ![Visualización en Grafana](./img/cont_grafana_bye.png)
+
+### Pruebas de estrés
+Para realizar las pruebas de estres y verificar que lleguen los mensajes a `Slack` configurado previamente, se relaizará de la siguiente manera:
+
+- Obtener el nombre del pod con el siguiente comando: 
+
+  ```sh
+  kubectl -n practica get pods
+  ``` 
+
+- Utilizar el resultado obtenido en el paso anterior para seleccionar en el dashboard creado de `grafana` para seleccionar el pod del que obtener información, seleccionando este a través del menú desplegable de nombre pod.  
+
+- Acceder mediante una shell interactiva al contenedor fast-api-webapp del pod obtenido en el paso anterior:
+
+  ```sh
+  kubectl -n practica exec --stdin --tty my-app-liberando-producto-5dfdd9bcf-ngj8h -c liberando-producto -- /bin/sh
+  ```  
+  
+  - Dentro de la shell, instalar y utilizar los siguientes comandos:
+    ```sh
+    apt update && apt install -y git golang
+    ```  
+  - Descargar el repositorio de github y acceder a la carpeta de este, donde se realizará la compilación del proyecot. 
+
+    ```sh
+    git clone https://github.com/jaeg/NodeWrecker.git
+    cd NodeWrecker
+    go build -o extress main.go
+    ```  
+
+  - Ejecución del binario obtenido de la compilación del paso anterior que realizará una prueba de extress dentro del pod:
+
+    ```sh
+    ./extress -abuse-memory -escalate -max-duration 10000000
+    ```      
+
+  - Abrir una nueva pestaña en la terminal y ver como evoluciona el HPA creado para la aplicación web:
+
+    ```sh
+    kubectl -n practica get hpa -w
+    ```
+
+  - Abrir una nueva pestaña en la terminal y ver como mientras en el HPA los targets estén por encima de los configurados como máximos se crean nuevos pods para la aplicación:
+
+    ```sh
+    kubectl -n practica get po -w
+    ```  
+
 
 
 
